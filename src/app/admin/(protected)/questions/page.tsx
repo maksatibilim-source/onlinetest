@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { QuestionForm } from "@/components/admin/QuestionForm";
+import { QuestionImport } from "@/components/admin/QuestionImport";
 import { MathContent } from "@/components/MathContent";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { OPTION_LABELS } from "@/lib/utils";
@@ -26,7 +27,12 @@ export default async function QuestionsPage() {
       </p>
 
       <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-6">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">Жаңа сұрақ енгізу</h2>
+        <h2 className="mb-4 text-lg font-semibold text-gray-900">Жаппай импорт (.tex / мәтін)</h2>
+        <QuestionImport subjects={subjects} />
+      </section>
+
+      <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-6">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900">Бір сұрақ енгізу</h2>
         <QuestionForm subjects={subjects} />
       </section>
 
