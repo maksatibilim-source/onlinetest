@@ -1,0 +1,29 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# env
+.env
+.env*.local
+
+# prisma / sqlite
+/prisma/*.db
+/prisma/*.db-journal
+/prisma/migrations/dev.db*
+
+# uploads (локал сурет жүктеулер)
+/public/uploads/*
+!/public/uploads/.gitkeep
+
+# misc
+.DS_Store
+*.pem
+npm-debug.log*
+/coverage
+next-env.d.ts
