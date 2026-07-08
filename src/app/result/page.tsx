@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { levelLabel } from "@/lib/utils";
 
 export default async function ResultPage({
   searchParams,
@@ -43,7 +44,7 @@ export default async function ResultPage({
         </div>
         <h1 className="text-2xl font-bold text-gray-900">Тест аяқталды!</h1>
         <p className="mt-1 text-sm text-gray-500">
-          {student.fullName} · {student.grade}-сынып
+          {student.fullName} · {levelLabel(student.grade)}
         </p>
 
         <div className="my-6 rounded-xl bg-brand-50 py-5">

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { QUESTIONS_PER_SUBJECT, shuffle } from "@/lib/utils";
+import { QUESTIONS_PER_SUBJECT, TEACHER_GRADE, shuffle } from "@/lib/utils";
 
 // Оқушы белгілі бір ПӘНДІ тапсыруды бастайды.
 // Осы пәннен кездейсоқ 20 сұрақ таңдалып, әрекетке (Attempt) бекітіледі.
@@ -24,7 +24,15 @@ export async function POST(req: Request) {
   }
 
   const subject = await prisma.subject.findUnique({ where: { id: subjectId } });
-  if (!subject || subject.grade !== student.grade) {
+  if (!subject) {
+    return NextResponse.json({ error: "Пән табылмады" }, { status: 400 });
+  }
+  // Мұғалім: пән кодына тіркелген болуы керек. Оқушы: пән сыныбына сай болуы керек.
+  if (student.grade === TEACHER_GRADE) {
+    if (!activeCode.subjectIds.includes(subjectId)) {
+      return NextResponse.json({ error: "Бұл пән рұқсат етілмеген" }, { status: 400 });
+    }
+  } else if (subject.grade !== student.grade) {
     return NextResponse.json({ error: "Пән табылмады" }, { status: 400 });
   }
 

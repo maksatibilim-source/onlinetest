@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { TEACHER_GRADE } from "@/lib/utils";
 
-// Оқушының пәндер дашбордына арналған дерек:
-// сыныбының пәндері + әр пәннің тапсыру статусы (аяқталды / жалғасуда / жоқ).
+// Оқушының/мұғалімнің пәндер дашбордына арналған дерек.
+// Оқушы: сыныбының барлық пәні. Мұғалім: кодына тіркелген пәндер ғана.
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const studentId = searchParams.get("studentId");
@@ -18,8 +19,12 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Оқушы табылмады" }, { status: 404 });
   }
 
+  const isTeacher = student.grade === TEACHER_GRADE;
+
   const subjects = await prisma.subject.findMany({
-    where: { grade: student.grade },
+    where: isTeacher
+      ? { id: { in: student.codes[0]?.subjectIds ?? [] } } // мұғалім: кодтағы пәндер
+      : { grade: student.grade }, // оқушы: сынып пәндері
     orderBy: { name: "asc" },
     include: { _count: { select: { questions: true } } },
   });

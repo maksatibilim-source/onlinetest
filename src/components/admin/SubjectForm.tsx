@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { GRADES } from "@/lib/utils";
+import { LEVELS, levelLabel } from "@/lib/utils";
 
 export function SubjectForm() {
   const router = useRouter();
@@ -47,15 +47,15 @@ export function SubjectForm() {
         />
       </div>
       <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">Сынып</label>
+        <label className="mb-1 block text-sm font-medium text-gray-700">Деңгей</label>
         <select
           value={grade}
           onChange={(e) => setGrade(Number(e.target.value))}
           className="rounded-lg border border-gray-300 px-3 py-2 focus:border-brand-500 focus:outline-none"
         >
-          {GRADES.map((g) => (
+          {LEVELS.map((g) => (
             <option key={g} value={g}>
-              {g}-сынып
+              {levelLabel(g)}
             </option>
           ))}
         </select>

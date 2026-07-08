@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { GRADES } from "@/lib/utils";
+import { GRADES, TEACHER_GRADE } from "@/lib/utils";
 
 export default function QuestionnairePage() {
   const router = useRouter();
   const [codeId, setCodeId] = useState<string | null>(null);
   const [fullName, setFullName] = useState("");
   const [grade, setGrade] = useState<number>(5);
+  const [isTeacher, setIsTeacher] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -21,7 +22,12 @@ export default function QuestionnairePage() {
     }
     setCodeId(id);
     const g = sessionStorage.getItem("ot_grade");
-    if (g) setGrade(Number(g));
+    if (g === String(TEACHER_GRADE)) {
+      setIsTeacher(true);
+      setGrade(TEACHER_GRADE); // мұғалім — сынып таңдалмайды
+    } else if (g) {
+      setGrade(Number(g));
+    }
   }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -71,25 +77,31 @@ export default function QuestionnairePage() {
             />
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Сыныбы</label>
-            <div className="grid grid-cols-5 gap-2">
-              {GRADES.map((g) => (
-                <button
-                  key={g}
-                  type="button"
-                  onClick={() => setGrade(g)}
-                  className={`rounded-lg border-2 py-2.5 font-semibold transition ${
-                    grade === g
-                      ? "border-brand-500 bg-brand-50 text-brand-700"
-                      : "border-gray-200 text-gray-600 hover:border-gray-300"
-                  }`}
-                >
-                  {g}
-                </button>
-              ))}
+          {isTeacher ? (
+            <div className="rounded-lg border-2 border-brand-200 bg-brand-50 px-4 py-3 text-center text-sm font-medium text-brand-700">
+              👩‍🏫 Мұғалім біліктілік тесті
             </div>
-          </div>
+          ) : (
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Сыныбы</label>
+              <div className="grid grid-cols-5 gap-2">
+                {GRADES.map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setGrade(g)}
+                    className={`rounded-lg border-2 py-2.5 font-semibold transition ${
+                      grade === g
+                        ? "border-brand-500 bg-brand-50 text-brand-700"
+                        : "border-gray-200 text-gray-600 hover:border-gray-300"
+                    }`}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {error && <p className="mt-4 text-sm text-red-600">{error}</p>}

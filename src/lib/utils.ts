@@ -18,6 +18,23 @@ export function generate4DigitCode(): string {
 export const GRADES = [5, 6, 7, 8, 9] as const;
 export type Grade = (typeof GRADES)[number];
 
+// Мұғалім біліктілік тесті — арнайы "деңгей" (grade = 0)
+export const TEACHER_GRADE = 0;
+
+// Барлық деңгейлер (селектілер үшін): 5–9 сыныптар + Мұғалім
+export const LEVELS = [...GRADES, TEACHER_GRADE] as const;
+
+// Деңгейдің көрінетін атауы
+export function levelLabel(grade: number | null | undefined): string {
+  if (grade === TEACHER_GRADE) return "Мұғалім";
+  if (grade === null || grade === undefined) return "Барлығы";
+  return `${grade}-сынып`;
+}
+
+export function isTeacherGrade(grade: number | null | undefined): boolean {
+  return grade === TEACHER_GRADE;
+}
+
 // Әр пән тестінде шығатын сұрақтың ең көп саны (кездейсоқ таңдалады)
 export const QUESTIONS_PER_SUBJECT = 20;
 

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { QUESTIONS_PER_SUBJECT } from "@/lib/utils";
+import { QUESTIONS_PER_SUBJECT, levelLabel } from "@/lib/utils";
 
 interface SubjectItem {
   id: string;
@@ -97,7 +97,7 @@ export default function SubjectsPage() {
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold text-gray-900">Пәндер</h1>
           <p className="mt-1 text-sm text-gray-500">
-            {studentName} · {grade}-сынып · әр пәнде {QUESTIONS_PER_SUBJECT} сұрақ
+            {studentName} · {levelLabel(grade)} · әр пәнде {QUESTIONS_PER_SUBJECT} сұрақ
           </p>
         </div>
 

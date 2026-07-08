@@ -98,14 +98,17 @@ model Answer {
 }
 
 // Бір реттік құпия сөз (4 таңбалы). Тест аяқталғанда жарамсыз болады.
+// grade: 5–9 = сынып, 0 = Мұғалім біліктілік тесті, null = кез келген сынып.
+// Мұғалім коды үшін subjectIds — админ таңдаған нақты пәндер (1 не одан көп).
 model OneTimeCode {
-  id        String    @id @default(cuid())
-  code      String    @unique
-  status    String    @default("active") // "active" | "used" | "revoked"
-  grade     Int? // қосымша: кодты сыныпқа байлау (міндетті емес)
-  studentId String?
-  student   Student?  @relation(fields: [studentId], references: [id], onDelete: SetNull)
-  createdAt DateTime  @default(now())
-  usedAt    DateTime?
-  attempts  Attempt[]
+  id         String    @id @default(cuid())
+  code       String    @unique
+  status     String    @default("active") // "active" | "used" | "revoked"
+  grade      Int? // 5–9 | 0 (мұғалім) | null (кез келген сынып)
+  subjectIds String[]  @default([]) // мұғалім коды үшін таңдалған пәндер
+  studentId  String?
+  student    Student?  @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  createdAt  DateTime  @default(now())
+  usedAt     DateTime?
+  attempts   Attempt[]
 }

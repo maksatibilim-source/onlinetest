@@ -57,7 +57,10 @@ export default function LoginPage() {
       if (!res.ok) throw new Error(data.error ?? "Код қате немесе жарамсыз");
 
       sessionStorage.setItem("ot_codeId", data.codeId);
-      if (data.grade) sessionStorage.setItem("ot_grade", String(data.grade));
+      // grade 0 (мұғалім) де сақталуы керек — сондықтан null/undefined-пен салыстырамыз
+      if (data.grade !== null && data.grade !== undefined) {
+        sessionStorage.setItem("ot_grade", String(data.grade));
+      }
       router.push("/questionnaire");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Қате шықты");

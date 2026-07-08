@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { SubjectForm } from "@/components/admin/SubjectForm";
 import { DeleteButton } from "@/components/admin/DeleteButton";
-import { GRADES } from "@/lib/utils";
+import { LEVELS, levelLabel } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -21,13 +21,13 @@ export default async function SubjectsPage() {
       </div>
 
       <div className="mt-8 space-y-6">
-        {GRADES.map((grade) => {
+        {LEVELS.map((grade) => {
           const list = subjects.filter((s) => s.grade === grade);
           if (list.length === 0) return null;
           return (
             <div key={grade}>
               <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-400">
-                {grade}-сынып
+                {levelLabel(grade)}
               </h2>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {list.map((s) => (

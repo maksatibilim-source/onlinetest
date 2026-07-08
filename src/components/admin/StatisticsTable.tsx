@@ -1,5 +1,7 @@
 "use client";
 
+import { levelLabel } from "@/lib/utils";
+
 export interface StatSubject {
   name: string;
   score: number;
@@ -46,7 +48,7 @@ export function StatisticsTable({ rows }: { rows: StatRow[] }) {
           {rows.map((r) => (
             <tr key={r.studentId} className="hover:bg-gray-50">
               <td className="px-4 py-3 font-medium text-gray-900">{r.fullName}</td>
-              <td className="px-4 py-3 text-gray-600">{r.grade}-сынып</td>
+              <td className="px-4 py-3 text-gray-600">{levelLabel(r.grade)}</td>
               <td className="px-4 py-3">
                 <div className="flex flex-wrap gap-1.5">
                   {r.subjects.length === 0 ? (

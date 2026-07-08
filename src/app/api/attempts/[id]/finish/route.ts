@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { TEACHER_GRADE } from "@/lib/utils";
 
 interface IncomingAnswer {
   questionId: string;
@@ -69,18 +70,28 @@ export async function POST(
   let allDone = false;
   const student = await prisma.student.findUnique({ where: { id: attempt.studentId } });
   if (student) {
-    const subjectsWithQuestions = await prisma.subject.findMany({
-      where: { grade: student.grade, questions: { some: {} } },
-      select: { id: true },
-    });
+    // Аяқталуы тиіс пәндер: оқушыда — сынып пәндері; мұғалімде — кодқа тіркелген пәндер.
+    let required: { id: string }[];
+    if (student.grade === TEACHER_GRADE) {
+      const code = attempt.codeId
+        ? await prisma.oneTimeCode.findUnique({ where: { id: attempt.codeId } })
+        : null;
+      required = await prisma.subject.findMany({
+        where: { id: { in: code?.subjectIds ?? [] }, questions: { some: {} } },
+        select: { id: true },
+      });
+    } else {
+      required = await prisma.subject.findMany({
+        where: { grade: student.grade, questions: { some: {} } },
+        select: { id: true },
+      });
+    }
     const finished = await prisma.attempt.findMany({
       where: { studentId: student.id, status: "finished" },
       select: { subjectId: true },
     });
     const finishedSet = new Set(finished.map((a) => a.subjectId));
-    allDone =
-      subjectsWithQuestions.length > 0 &&
-      subjectsWithQuestions.every((s) => finishedSet.has(s.id));
+    allDone = required.length > 0 && required.every((s) => finishedSet.has(s.id));
 
     if (allDone && attempt.codeId) {
       await prisma.oneTimeCode.update({
