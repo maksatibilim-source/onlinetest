@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
-    "start:prod": "prisma db push --skip-generate && node prisma/ensure-admin.mjs && next start",
+    "start:prod": "node prisma/db-setup.mjs && next start",
     "lint": "next lint",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
