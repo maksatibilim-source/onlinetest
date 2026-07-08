@@ -6,7 +6,7 @@ interface IncomingAnswer {
   selectedKey: string | null;
 }
 
-// Тестті аяқтау: жауаптарды бағалау + кодты жарамсыз ету
+// Бір пән тестін аяқтау: жауаптарды бағалау. Барлық пән аяқталса — кодты жарамсыз ету.
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -21,33 +21,28 @@ export async function POST(
   if (!attempt) {
     return NextResponse.json({ error: "Тест сеансы табылмады" }, { status: 404 });
   }
-  // Қайта тапсыруды болдырмау (идемпотентті)
   if (attempt.status === "finished") {
     return NextResponse.json({ ok: true, score: attempt.score, total: attempt.totalQuestions });
   }
 
+  // Тек осы әрекетке бекітілген сұрақтарды бағалаймыз (клиент жіберген артықты елемейміз)
   const incoming = Array.isArray(answers) ? answers : [];
-  const questionIds = incoming.map((a) => a.questionId);
+  const answerMap = new Map(incoming.map((a) => [a.questionId, a.selectedKey ?? null]));
 
-  // Дұрыс кілттерді сервер жағында аламыз (клиентке ешқашан жіберілмеген)
   const questions = await prisma.question.findMany({
-    where: { id: { in: questionIds } },
+    where: { id: { in: attempt.questionIds } },
   });
   const qMap = new Map(questions.map((q) => [q.id, q]));
 
   let score = 0;
-  const answerData = incoming
-    .filter((a) => qMap.has(a.questionId))
-    .map((a) => {
-      const q = qMap.get(a.questionId)!;
-      const isCorrect = a.selectedKey === q.correctKey;
+  const answerData = attempt.questionIds
+    .filter((qid) => qMap.has(qid))
+    .map((qid) => {
+      const q = qMap.get(qid)!;
+      const selectedKey = answerMap.get(qid) ?? null;
+      const isCorrect = selectedKey === q.correctKey;
       if (isCorrect) score += 1;
-      return {
-        attemptId: id,
-        questionId: a.questionId,
-        selectedKey: a.selectedKey ?? null,
-        isCorrect,
-      };
+      return { attemptId: id, questionId: qid, selectedKey, isCorrect };
     });
 
   const finalViolations =
@@ -56,11 +51,8 @@ export async function POST(
       : attempt.violations;
 
   await prisma.$transaction(async (tx) => {
-    // Қайта тапсыру болса — ескі жауаптарды тазарту
     await tx.answer.deleteMany({ where: { attemptId: id } });
-    if (answerData.length) {
-      await tx.answer.createMany({ data: answerData });
-    }
+    if (answerData.length) await tx.answer.createMany({ data: answerData });
     await tx.attempt.update({
       where: { id },
       data: {
@@ -71,14 +63,32 @@ export async function POST(
         finishedAt: new Date(),
       },
     });
-    // Кодты жарамсыз ету — қайта қолдануға тыйым
-    if (attempt.codeId) {
-      await tx.oneTimeCode.update({
+  });
+
+  // Оқушы осы сыныптағы (сұрағы бар) барлық пәнді аяқтады ма? Аяқтаса — кодты жарамсыз ету.
+  let allDone = false;
+  const student = await prisma.student.findUnique({ where: { id: attempt.studentId } });
+  if (student) {
+    const subjectsWithQuestions = await prisma.subject.findMany({
+      where: { grade: student.grade, questions: { some: {} } },
+      select: { id: true },
+    });
+    const finished = await prisma.attempt.findMany({
+      where: { studentId: student.id, status: "finished" },
+      select: { subjectId: true },
+    });
+    const finishedSet = new Set(finished.map((a) => a.subjectId));
+    allDone =
+      subjectsWithQuestions.length > 0 &&
+      subjectsWithQuestions.every((s) => finishedSet.has(s.id));
+
+    if (allDone && attempt.codeId) {
+      await prisma.oneTimeCode.update({
         where: { id: attempt.codeId },
         data: { status: "used", usedAt: new Date() },
       });
     }
-  });
+  }
 
-  return NextResponse.json({ ok: true, score, total: answerData.length });
+  return NextResponse.json({ ok: true, score, total: answerData.length, allDone });
 }

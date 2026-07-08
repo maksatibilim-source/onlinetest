@@ -23,6 +23,7 @@ export default function TestPage() {
   const router = useRouter();
   const [attemptId, setAttemptId] = useState<string | null>(null);
   const [studentName, setStudentName] = useState("");
+  const [subjectName, setSubjectName] = useState("");
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [current, setCurrent] = useState(0);
@@ -53,7 +54,7 @@ export default function TestPage() {
   useEffect(() => {
     const id = sessionStorage.getItem("ot_attemptId");
     if (!id) {
-      router.replace("/");
+      router.replace("/subjects");
       return;
     }
     setAttemptId(id);
@@ -64,9 +65,10 @@ export default function TestPage() {
         const res = await fetch(`/api/questions/quiz?attemptId=${id}`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? "Сұрақтарды жүктеу қатесі");
+        setSubjectName(data.subjectName ?? "");
         setQuestions(data.questions);
       } catch {
-        router.replace("/");
+        router.replace("/subjects");
       } finally {
         setLoading(false);
       }
@@ -102,11 +104,9 @@ export default function TestPage() {
       });
       if (!res.ok) throw new Error();
 
-      // Сессияны тазарту — кодты қайта қолдануға болмайды
-      sessionStorage.removeItem("ot_codeId");
+      // Осы пән тапсырылды — пәндер дашбордына ораламыз (басқа пәндерді тапсыру үшін)
       sessionStorage.removeItem("ot_attemptId");
-      sessionStorage.removeItem("ot_grade");
-      router.replace(`/result?attemptId=${attemptId}`);
+      router.replace("/subjects");
     } catch {
       setSubmitting(false);
       setFinished(false);
@@ -138,7 +138,10 @@ export default function TestPage() {
       <header className="sticky top-0 z-30 border-b border-gray-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-gray-900">{studentName}</p>
+            <p className="truncate text-sm font-semibold text-gray-900">
+              {subjectName}
+              {studentName && <span className="font-normal text-gray-400"> · {studentName}</span>}
+            </p>
             <p className="text-xs text-gray-500">
               Сұрақ {current + 1} / {questions.length} · Жауап берілді: {answeredCount}
             </p>

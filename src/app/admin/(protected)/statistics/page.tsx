@@ -4,55 +4,52 @@ import { StatisticsTable, type StatRow } from "@/components/admin/StatisticsTabl
 export const dynamic = "force-dynamic";
 
 export default async function StatisticsPage() {
-  const attempts = await prisma.attempt.findMany({
-    orderBy: { startedAt: "desc" },
+  const students = await prisma.student.findMany({
+    orderBy: { createdAt: "desc" },
     include: {
-      student: true,
-      answers: { include: { question: { include: { subject: true } } } },
+      attempts: { include: { subject: true }, orderBy: { startedAt: "asc" } },
     },
   });
 
-  const rows: StatRow[] = attempts.map((a) => {
-    const bySubject = new Map<string, { correct: number; total: number }>();
-    for (const ans of a.answers) {
-      const name = ans.question.subject.name;
-      const cur = bySubject.get(name) ?? { correct: 0, total: 0 };
-      cur.total += 1;
-      if (ans.isCorrect) cur.correct += 1;
-      bySubject.set(name, cur);
-    }
+  const rows: StatRow[] = students.map((s) => {
+    const finished = s.attempts.filter((a) => a.status === "finished");
     return {
-      attemptId: a.id,
-      fullName: a.student.fullName,
-      grade: a.student.grade,
-      subjects: [...bySubject.entries()].map(([name, s]) => ({ name, ...s })),
-      totalScore: a.score,
-      totalQuestions: a.totalQuestions,
-      violations: a.violations,
-      status: a.status,
-      finishedAt: a.finishedAt?.toISOString() ?? null,
+      studentId: s.id,
+      fullName: s.fullName,
+      grade: s.grade,
+      subjects: s.attempts.map((a) => ({
+        name: a.subject.name,
+        score: a.score,
+        total: a.totalQuestions,
+        status: a.status,
+        violations: a.violations,
+      })),
+      totalScore: finished.reduce((x, a) => x + a.score, 0),
+      totalQuestions: finished.reduce((x, a) => x + a.totalQuestions, 0),
+      totalViolations: s.attempts.reduce((x, a) => x + a.violations, 0),
+      finishedCount: finished.length,
+      createdAt: s.createdAt.toISOString(),
     };
   });
 
-  const totalViolations = rows.reduce((sum, r) => sum + r.violations, 0);
+  const totalViolations = rows.reduce((sum, r) => sum + r.totalViolations, 0);
+  const totalFinished = rows.reduce((sum, r) => sum + r.finishedCount, 0);
 
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900">Статистика</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Оқушылардың нәтижелері мен прокторинг көрсеткіштері
+        Әр оқушының пәндер бойынша нәтижесі мен прокторинг көрсеткіштері
       </p>
 
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-gray-200 bg-white p-4">
           <p className="text-2xl font-extrabold text-gray-900">{rows.length}</p>
-          <p className="text-sm text-gray-500">Барлық тапсыру</p>
+          <p className="text-sm text-gray-500">Тіркелген оқушы</p>
         </div>
         <div className="rounded-2xl border border-gray-200 bg-white p-4">
-          <p className="text-2xl font-extrabold text-gray-900">
-            {rows.filter((r) => r.status === "finished").length}
-          </p>
-          <p className="text-sm text-gray-500">Аяқталды</p>
+          <p className="text-2xl font-extrabold text-gray-900">{totalFinished}</p>
+          <p className="text-sm text-gray-500">Аяқталған пән тесті</p>
         </div>
         <div className="rounded-2xl border border-gray-200 bg-white p-4">
           <p className="text-2xl font-extrabold text-red-600">{totalViolations}</p>

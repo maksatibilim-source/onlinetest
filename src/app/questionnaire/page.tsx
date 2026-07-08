@@ -30,7 +30,7 @@ export default function QuestionnairePage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/attempts", {
+      const res = await fetch("/api/session/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ codeId, fullName: fullName.trim(), grade }),
@@ -38,9 +38,9 @@ export default function QuestionnairePage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Тестті бастау мүмкін болмады");
 
-      sessionStorage.setItem("ot_attemptId", data.attemptId);
+      sessionStorage.setItem("ot_studentId", data.studentId);
       sessionStorage.setItem("ot_studentName", fullName.trim());
-      router.push("/test");
+      router.push("/subjects");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Қате шықты");
     } finally {

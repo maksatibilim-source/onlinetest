@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { shuffle } from "@/lib/utils";
 
-// Оқушыға арналған рандомизацияланған тест.
+// Оқушыға арналған тест — әрекетке (Attempt) бекітілген нақты 20 сұрақ.
 // МАҢЫЗДЫ: дұрыс жауап кілті (correctKey) клиентке ЕШҚАШАН жіберілмейді.
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -13,26 +13,22 @@ export async function GET(req: Request) {
 
   const attempt = await prisma.attempt.findUnique({
     where: { id: attemptId },
-    include: { student: true },
+    include: { subject: true },
   });
   if (!attempt) {
     return NextResponse.json({ error: "Тест сеансы табылмады" }, { status: 404 });
   }
 
-  const grade = attempt.student.grade;
-
-  // Оқушының сыныбына тиесілі барлық пәндердің сұрақтары
   const questions = await prisma.question.findMany({
-    where: { subject: { grade } },
-    include: { subject: true },
+    where: { id: { in: attempt.questionIds } },
   });
 
-  // Сұрақтарды да, әр сұрақтың нұсқаларын да араластырамыз
+  // Сұрақтарды да, нұсқаларды да араластырамыз
   const payload = shuffle(questions).map((q) => ({
     id: q.id,
     text: q.text,
     imageUrl: q.imageUrl,
-    subjectName: q.subject.name,
+    subjectName: attempt.subject.name,
     options: shuffle([
       { key: "A", text: q.optionA },
       { key: "B", text: q.optionB },
@@ -41,5 +37,5 @@ export async function GET(req: Request) {
     ]),
   }));
 
-  return NextResponse.json({ grade, questions: payload });
+  return NextResponse.json({ subjectName: attempt.subject.name, questions: payload });
 }

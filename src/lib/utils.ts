@@ -18,6 +18,9 @@ export function generate4DigitCode(): string {
 export const GRADES = [5, 6, 7, 8, 9] as const;
 export type Grade = (typeof GRADES)[number];
 
+// Әр пән тестінде шығатын сұрақтың ең көп саны (кездейсоқ таңдалады)
+export const QUESTIONS_PER_SUBJECT = 20;
+
 // Дерекқордағы кілттер
 export const OPTION_KEYS = ["A", "B", "C", "D"] as const;
 export type OptionKey = (typeof OPTION_KEYS)[number];

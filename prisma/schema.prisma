@@ -41,6 +41,7 @@ model Subject {
   grade     Int // осы пән қай сыныпқа арналған
   createdAt DateTime   @default(now())
   questions Question[]
+  attempts  Attempt[]
 
   @@unique([name, grade]) // бір сыныпта бір пән атауы қайталанбайды
 }
@@ -61,20 +62,26 @@ model Question {
   answers    Answer[]
 }
 
-// Тест сеансы — бір оқушының бір реткі тапсыруы (сынып бойынша)
+// Тест сеансы — бір оқушының БІР ПӘН бойынша тапсыруы.
+// Әр пән бөлек Attempt құрайды (оқушы пәндерді жеке-жеке тапсырады).
 model Attempt {
   id             String       @id @default(cuid())
   studentId      String
   student        Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subjectId      String
+  subject        Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   codeId         String?
   code           OneTimeCode? @relation(fields: [codeId], references: [id], onDelete: SetNull)
-  score          Int          @default(0) // жалпы дұрыс жауап саны
+  questionIds    String[]     @default([]) // осы әрекетке таңдалған сұрақтар (макс 20), тұрақты болу үшін
+  score          Int          @default(0) // дұрыс жауап саны
   totalQuestions Int          @default(0)
   violations     Int          @default(0) // прокторинг: ереже бұзу саны
   status         String       @default("in_progress") // "in_progress" | "finished"
   startedAt      DateTime     @default(now())
   finishedAt     DateTime?
   answers        Answer[]
+
+  @@unique([studentId, subjectId]) // бір оқушы бір пәнді бір рет қана тапсырады
 }
 
 // Жеке жауап — қай сұраққа не таңдалды. Пән бойынша ұпай осыдан жиналады.
